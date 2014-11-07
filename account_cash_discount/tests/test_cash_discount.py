@@ -81,7 +81,6 @@ class TestCashDiscount(SingleTransactionCase):
             cr, uid, [chart_setup_id])
         ac_ids = reg('account.account').search(
             cr, uid, [('company_id', '=', self.company_id)])
-        print reg('account.account').read(cr, uid, ac_ids, ['code'])
         year = datetime.now().strftime('%Y')
         fiscalyear_id = reg('account.fiscalyear').create(
             cr, uid,
@@ -202,9 +201,6 @@ class TestCashDiscount(SingleTransactionCase):
         del(res['value']['line_cr_ids'][0]['date_due'])
         res['value']['line_cr_ids'][0]['amount'] = 90.0
         vals['line_cr_ids'] = [(0, 0, i) for i in res['value']['line_cr_ids']]
-        print vals
-        import pdb
-        pdb.set_trace()
         voucher_id = voucher_reg.create(cr, uid, vals)
         voucher = voucher_reg.browse(cr, uid, voucher_id)
         assert (voucher.state == 'draft'), "Voucher is not in draft state"
