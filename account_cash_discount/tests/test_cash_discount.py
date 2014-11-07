@@ -101,7 +101,7 @@ class TestCashDiscount(SingleTransactionCase):
         can be validated properly.
         """
         partner_model = reg('res.partner')
-        customer_id = partner_model.create(
+        self.customer_id = partner_model.create(
             cr, uid, {
                 'name': 'Customer',
                 'customer': True,
@@ -131,7 +131,7 @@ class TestCashDiscount(SingleTransactionCase):
         invoice_model = reg('account.invoice')
         values = {
             'type': 'out_invoice',
-            'partner_id': customer_id,
+            'partner_id': self.customer_id,
             'account_id': self.receivable_id,
             'payment_term': payment_term_id,
             'invoice_line': [
@@ -157,8 +157,65 @@ class TestCashDiscount(SingleTransactionCase):
             uid, 'account.invoice', self.invoice_id, 'invoice_open', cr)
         self.assert_invoice_state('open')
 
+    def setup_voucher(self, reg, cr, uid):
+        # Based on account_voucher/test/sales_payment
+        voucher_reg = reg('account.voucher')
+        vals = {}
+        journal_id = reg('account.journal').search(
+            cr, uid, [('company_id', '=', self.company_id),
+                      ('code', '=', 'BNK2')])[0]
+        res = voucher_reg.onchange_partner_id(
+            cr, uid, [], self.customer_id, journal_id,
+            0.0, 1, ttype='receipt', date=False)
+
+        account_view_id = reg('account.account').search(
+            cr, uid, [
+                ('company_id', '=', self.company_id),
+                ('code', '=', '1104')])[0]
+        user_type_cash_id = reg('ir.model.data').get_object_reference(
+            cr, uid, 'account', 'data_account_type_cash')[1]
+        account_cash_id = reg('account.account').create(
+            cr, uid, {
+                'name': 'Cash',
+                'code': '110499',
+                'company_id': self.company_id,
+                'parent_id': account_view_id,
+                'type': 'liquidity',
+                'user_type': user_type_cash_id,
+                })
+        period_id = self.registry('account.invoice').read(
+            self.cr, self.uid, self.invoice_id, ['period_id'])['period_id'][0]
+        vals = {
+            'period_id': period_id,
+            'account_id': account_cash_id,
+            'amount': 90.0,
+            'company_id': self.company_id,
+            'journal_id': journal_id,
+            'partner_id': self.customer_id,
+            'type': 'receipt',
+            }
+        if not res['value']['line_cr_ids']:
+            res['value']['line_cr_ids'] = [
+                {'type': 'cr', 'account_id': self.receivable_id}]
+        # Remove values for fields that are readonly in the field
+        del(res['value']['line_cr_ids'][0]['date_original'])
+        del(res['value']['line_cr_ids'][0]['date_due'])
+        res['value']['line_cr_ids'][0]['amount'] = 90.0
+        vals['line_cr_ids'] = [(0, 0, i) for i in res['value']['line_cr_ids']]
+        print vals
+        import pdb
+        pdb.set_trace()
+        voucher_id = voucher_reg.create(cr, uid, vals)
+        voucher = voucher_reg.browse(cr, uid, voucher_id)
+        assert (voucher.state == 'draft'), "Voucher is not in draft state"
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(
+            uid, 'account.voucher', voucher.id, 'proforma_voucher', cr)
+        self.assert_invoice_state('paid')
+
     def test_cash_discount(self):
         reg, cr, uid, = self.registry, self.cr, self.uid
         self.setup_company(reg, cr, uid)
         self.setup_chart(reg, cr, uid)
         self.setup_receivables(reg, cr, uid)
+        self.setup_voucher(reg, cr, uid)
