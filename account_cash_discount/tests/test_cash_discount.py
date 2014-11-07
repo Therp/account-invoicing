@@ -96,8 +96,8 @@ class TestCashDiscount(SingleTransactionCase):
 
     def setup_receivables(self, reg, cr, uid, context=None):
         """
-        Set up suppliers and invoice them. Check that the invoices
-        can be validated properly.
+        Create and confirm a customer invoice with a payment term with
+        a 10% discount if paid within two days.
         """
         partner_model = reg('res.partner')
         self.customer_id = partner_model.create(
@@ -162,7 +162,12 @@ class TestCashDiscount(SingleTransactionCase):
         self.assert_invoice_state('open')
 
     def setup_voucher(self, reg, cr, uid):
-        # Based on account_voucher/test/sales_payment
+        """
+        Create a voucher with the amount of the invoice minus the discount.
+        Check that this satisfies the invoice.
+
+        Based on account_voucher/test/sales_payment.yml
+        """
         voucher_reg = reg('account.voucher')
         vals = {}
         journal_id = reg('account.journal').search(
@@ -172,12 +177,14 @@ class TestCashDiscount(SingleTransactionCase):
             cr, uid, [], self.customer_id, journal_id,
             0.0, 1, ttype='receipt', date=False)
 
+        # Create a cash account under an existing parent
         account_view_id = reg('account.account').search(
             cr, uid, [
                 ('company_id', '=', self.company_id),
                 ('code', '=', '1104')])[0]
         user_type_cash_id = reg('ir.model.data').get_object_reference(
             cr, uid, 'account', 'data_account_type_cash')[1]
+
         account_cash_id = reg('account.account').create(
             cr, uid, {
                 'name': 'Cash',
@@ -202,6 +209,7 @@ class TestCashDiscount(SingleTransactionCase):
             res['value']['line_cr_ids'] = [
                 {'type': 'cr', 'account_id': self.receivable_id}]
         # Remove values for fields that are readonly in the field
+        # as per original yml code
         del(res['value']['line_cr_ids'][0]['date_original'])
         del(res['value']['line_cr_ids'][0]['date_due'])
         res['value']['line_cr_ids'][0]['amount'] = 90.0
