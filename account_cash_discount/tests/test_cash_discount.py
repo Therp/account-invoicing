@@ -17,7 +17,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+from datetime import datetime
 from openerp.tests.common import SingleTransactionCase
+from openerp import netsvc
 
 
 class TestCashDiscount(SingleTransactionCase):
@@ -33,7 +35,7 @@ class TestCashDiscount(SingleTransactionCase):
 
     def setup_company(self, reg, cr, uid):
         """
-        Set up a company with a bank account and configure the
+        Set up a company and configure the
         current user to work with that company
         """
         data_model = reg('ir.model.data')
@@ -41,32 +43,15 @@ class TestCashDiscount(SingleTransactionCase):
             cr, uid, 'base', 'nl')[1]
         self.currency_id = data_model.get_object_reference(
             cr, uid, 'base', 'EUR')[1]
-        self.bank_id = reg('res.bank').create(
-            cr, uid,
-            {
-                'name': 'ING Bank',
-                'bic': 'INGBNL2A',
-                'country': self.country_id,
-            })
         self.company_id = reg('res.company').create(
             cr, uid,
             {
-                'name': '_banking_addons_test_company',
+                'name': '_cash_discount_test_company',
                 'currency_id': self.currency_id,
                 'country_id': self.country_id,
             })
         self.partner_id = reg('res.company').read(
             cr, uid, self.company_id, ['partner_id'])['partner_id'][0]
-        self.partner_bank_id = reg('res.partner.bank').create(
-            cr, uid,
-            {
-                'state': 'iban',
-                'acc_number': 'NL08INGB0000000555',
-                'bank': self.bank_id,
-                'bank_bic': 'INGBNL2A',
-                'partner_id': self.partner_id,
-                'company_id': self.company_id,
-            })
         reg('res.users').write(
             cr, uid, [uid],
             {'company_ids': [(4, self.company_id)]})
@@ -94,6 +79,9 @@ class TestCashDiscount(SingleTransactionCase):
             cr, uid, chart_values)
         chart_setup_model.execute(
             cr, uid, [chart_setup_id])
+        ac_ids = reg('account.account').search(
+            cr, uid, [('company_id', '=', self.company_id)])
+        print reg('account.account').read(cr, uid, ac_ids, ['code'])
         year = datetime.now().strftime('%Y')
         fiscalyear_id = reg('account.fiscalyear').create(
             cr, uid,
@@ -119,14 +107,14 @@ class TestCashDiscount(SingleTransactionCase):
                 'customer': True,
                 'country_id': self.country_id,
                 }, context=context)
-        self.reveivable_id = reg('account.account').search(
+        self.receivable_id = reg('account.account').search(
             cr, uid, [
                 ('company_id', '=', self.company_id),
-                ('code', '=', '1102')])[0]
+                ('code', '=', '110200')])[0]
         income_id = reg('account.account').search(
             cr, uid, [
                 ('company_id', '=', self.company_id),
-                ('code', '=', '200')])[0]
+                ('code', '=', '200000')])[0]
 
         payment_term_id = reg('account.payment.term').create(
             cr, uid, {
@@ -145,7 +133,7 @@ class TestCashDiscount(SingleTransactionCase):
             'type': 'out_invoice',
             'partner_id': customer_id,
             'account_id': self.receivable_id,
-            'payment_term_id': payment_term_id,
+            'payment_term': payment_term_id,
             'invoice_line': [
                 (
                     0,
@@ -169,8 +157,8 @@ class TestCashDiscount(SingleTransactionCase):
             uid, 'account.invoice', self.invoice_id, 'invoice_open', cr)
         self.assert_invoice_state('open')
 
-        def test_cash_discount(self):
-            reg, cr, uid, = self.registry, self.cr, self.uid
-            self.setup_company(reg, cr, uid)
-            self.setup_chart(reg, cr, uid)
-            self.setup_receivables(reg, cr, uid)
+    def test_cash_discount(self):
+        reg, cr, uid, = self.registry, self.cr, self.uid
+        self.setup_company(reg, cr, uid)
+        self.setup_chart(reg, cr, uid)
+        self.setup_receivables(reg, cr, uid)
