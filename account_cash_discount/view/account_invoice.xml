@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="invoice_form" model="ir.ui.view">
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <field name="move_id" position="after">
+                        <field name="cash_discount_move_id"
+                            groups="account.group_account_user"
+                            readonly="1"
+                            attrs="{'invisible': [('cash_discount_move_id', '=', False)]}"/>
+                    </field>
+                    <field name="residual" position="after">
+                        <div attrs="{'invisible': [('cash_discount_move_id', '=', False)]}" colspan="2">
+                            Note: This invoice was paid with a cash discount as detailed in the cash discount correction move on the 'Other info' tab
+                        </div>
+                    </field>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

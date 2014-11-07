@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_account_move_line_reconcile_full" model="ir.ui.view">
+            <field name="model">account.move.line.reconcile</field>
+            <field name="inherit_id" ref="account.view_account_move_line_reconcile_full" />
+            <field name="arch" type="xml">
+                <data>
+                    <footer position="before">
+                        <group attrs="{'invisible': [('invoice_has_cash_discount', '=', False)]}">
+                            <field name="invoice_id" readonly="1" />
+                            <field name="invoice_has_cash_discount" invisible="1" />
+                        </group>
+                    </footer>
+                    <button string="Reconcile" position="after">
+                        <button string="Book difference as cash discount"
+                            type="object"
+                            name="reconcile_with_cash_discount"
+                            attrs="{'invisible': [('invoice_has_cash_discount', '=', False)]}"
+                            />
+                    </button>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

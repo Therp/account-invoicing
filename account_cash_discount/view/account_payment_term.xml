@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_payment_term_disc_tree" model="ir.ui.view">
+            <field name="name">account.payment.term.disc.tree</field>
+            <field name="model">account.payment.term</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Payment Term">
+                    <field name="name"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="view_payment_term_disc_form" model="ir.ui.view">
+            <field name="name">account.payment.term.disc.form</field>
+            <field name="model">account.payment.term</field>
+            <field name="inherit_id" ref="account.view_payment_term_form"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <field name="line_ids" position="after">
+                    <div class="oe_horizontal_separator oe_clear"><label for="cash_discount_ids" /></div>
+                    <field name="cash_discount_ids">
+                        <tree>
+                            <field name="days" />
+                            <field name="discount" />
+                            <field name="allowed_deviation" />
+                        </tree>
+                        <form>
+                            <group>
+                                <field name="days" />
+                                <field name="discount" />
+                                <field name="allowed_deviation" />
+                            </group>
+                            <group>
+                                <field name="discount_expense_account_id" />
+                                <field name="discount_income_account_id" />
+                            </group>
+                        </form>
+                    </field>
+                </field>
+            </field>
+        </record>
+    </data>
+</openerp>
+ 

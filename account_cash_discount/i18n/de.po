@@ -1,0 +1,133 @@
+# Translation of OpenERP Server.
+# This file contains the translation of the following modules:
+#	* account_cash_discount
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenERP Server 7.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-02-18 15:41+0000\n"
+"PO-Revision-Date: 2014-02-18 15:41+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: account_cash_discount
+#: code:addons/account_cash_discount/model/account_invoice.py:130
+#: code:addons/account_cash_discount/model/account_invoice.py:144
+#, python-format
+msgid "Cash discount writeoff"
+msgstr "Skontoabschreibung"
+
+#. module: account_cash_discount
+#: view:account.invoice:0
+msgid "Note: This invoice was paid with a cash discount as detailed in the cash discount correction move on the 'Other info' tab"
+msgstr "Achtung: Diese Rechnung wurde unter Einbehalt von Skonto bezahlt. Die ensprechenden Buchungen finden sich im 'Weitere Info'-Reiter."
+
+#. module: account_cash_discount
+#: field:account.payment.term.cash.discount,allowed_deviation:0
+msgid "Allowed deviation"
+msgstr "Erlaubte Abweichung"
+
+#. module: account_cash_discount
+#: help:account.payment.term.cash.discount,discount_expense_account_id:0
+msgid "This account will be used to post the cash discount expense"
+msgstr "Skontoausgaben werden auf dieses Konto gebucht"
+
+#. module: account_cash_discount
+#: field:account.move.line.reconcile,invoice_has_cash_discount:0
+msgid "Cash discount on invoice"
+msgstr "Rechnung mit Skonto"
+
+#. module: account_cash_discount
+#: model:ir.model,name:account_cash_discount.model_account_move_line_reconcile
+msgid "Account move line reconcile"
+msgstr "Buchen OP Ausgleich"
+
+#. module: account_cash_discount
+#: code:addons/account_cash_discount/model/account_payment_term.py:45
+#, python-format
+msgid "When working with cash discounts, you can only have one computation line of type \"balance\"!"
+msgstr "Skontobezahlungen können nur eine Berechnung vom Typ \"Saldo\" beinhalten!"
+
+#. module: account_cash_discount
+#: field:account.payment.term.cash.discount,discount_income_account_id:0
+msgid "Discount Income Account"
+msgstr "Skonto-Erlöskonto"
+
+#. module: account_cash_discount
+#: help:account.payment.term.cash.discount,discount_income_account_id:0
+msgid "This account will be used to post the cash discount income"
+msgstr "Skontoerlöse werden auf dieses Konto gebucht"
+
+#. module: account_cash_discount
+#: field:account.payment.term.cash.discount,discount:0
+msgid "Discount"
+msgstr "Skonto"
+
+#. module: account_cash_discount
+#: field:account.invoice,cash_discount_move_id:0
+msgid "Cash discount correction move"
+msgstr "Skonto-Buchungssatz"
+
+#. module: account_cash_discount
+#: view:account.move.line.reconcile:0
+msgid "Book difference as cash discount"
+msgstr "Differenz als Skonto buchen"
+
+#. module: account_cash_discount
+#: field:account.payment.term.cash.discount,payment_term_id:0
+msgid "Payment term"
+msgstr "Zahlungsbedingung"
+
+#. module: account_cash_discount
+#: field:account.payment.term.cash.discount,days:0
+msgid "Days"
+msgstr "Tage"
+
+#. module: account_cash_discount
+#: code:addons/account_cash_discount/model/account_payment_term.py:45
+#, python-format
+msgid "Error"
+msgstr "Fehler"
+
+#. module: account_cash_discount
+#: field:account.payment.term.cash.discount,discount_expense_account_id:0
+msgid "Discount Expense Account"
+msgstr "Skonto-Aufwandskonto"
+
+#. module: account_cash_discount
+#: field:account.payment.term,cash_discount_ids:0
+#: model:ir.model,name:account_cash_discount.model_account_payment_term_cash_discount
+msgid "Cash discount"
+msgstr "Skonto"
+
+#. module: account_cash_discount
+#: view:account.payment.term:0
+#: model:ir.model,name:account_cash_discount.model_account_payment_term
+msgid "Payment Term"
+msgstr "Zahlungsbedingung"
+
+#. module: account_cash_discount
+#: help:account.payment.term.cash.discount,allowed_deviation:0
+msgid "The amount a payment can deviate from the computed amount and still be accepted as payment within this discount.\n"
+"Think of rounding errors as use case for this"
+msgstr "Der Betrag um den eine Zahlung vom berechneten Betrag abweichen darf um noch als Zahlung innerhalb des Skontos angesehen zu werden.\n"
+"Dies vereinfact die Handhabung von Rundungsunterschieden."
+
+#. module: account_cash_discount
+#: code:addons/account_cash_discount/model/account_invoice.py:64
+#: code:addons/account_cash_discount/model/account_invoice.py:188
+#, python-format
+msgid "Cash discount for %s"
+msgstr "Skonto für %s"
+
+#. module: account_cash_discount
+#: field:account.move.line.reconcile,invoice_id:0
+#: model:ir.model,name:account_cash_discount.model_account_invoice
+msgid "Invoice"
+msgstr "Rechnung"
+
