@@ -23,15 +23,15 @@ from openerp import netsvc
 
 
 class TestCashDiscount(SingleTransactionCase):
-    def assert_invoice_state(self, expected):
+    def assert_invoice_state(self, invoice_id, expected):
         """
         Check that the state of our invoices is
         equal to the 'expected' parameter
         """
         invoice = self.registry('account.invoice').read(
-            self.cr, self.uid, self.invoice_id, ['state'])
+            self.cr, self.uid, invoice_id, ['state'])
         assert invoice['state'] == expected, \
-            'Invoice does not go into state \'%s\'' % expected
+            'Invoice is not in expected state \'%s\'' % expected
 
     def setup_company(self, reg, cr, uid):
         """
@@ -79,8 +79,25 @@ class TestCashDiscount(SingleTransactionCase):
             cr, uid, chart_values)
         chart_setup_model.execute(
             cr, uid, [chart_setup_id])
-        ac_ids = reg('account.account').search(
-            cr, uid, [('company_id', '=', self.company_id)])
+
+        # Create a cash account under an existing parent
+        account_view_id = reg('account.account').search(
+            cr, uid, [
+                ('company_id', '=', self.company_id),
+                ('code', '=', '1104')])[0]
+        user_type_cash_id = reg('ir.model.data').get_object_reference(
+            cr, uid, 'account', 'data_account_type_cash')[1]
+        self.account_cash_id = reg('account.account').create(
+            cr, uid, {
+                'name': 'Cash',
+                'code': '110499',
+                'company_id': self.company_id,
+                'parent_id': account_view_id,
+                'type': 'liquidity',
+                'user_type': user_type_cash_id,
+                })
+
+        # Create periods
         year = datetime.now().strftime('%Y')
         fiscalyear_id = reg('account.fiscalyear').create(
             cr, uid,
@@ -101,6 +118,12 @@ class TestCashDiscount(SingleTransactionCase):
         """
         partner_model = reg('res.partner')
         self.customer_id = partner_model.create(
+            cr, uid, {
+                'name': 'Customer',
+                'customer': True,
+                'country_id': self.country_id,
+                }, context=context)
+        self.customer2_id = partner_model.create(
             cr, uid, {
                 'name': 'Customer',
                 'customer': True,
@@ -152,16 +175,17 @@ class TestCashDiscount(SingleTransactionCase):
             ],
         }
         self.invoice_id = invoice_model.create(
-            cr, uid, values,
-            context={
-                'type': 'out_invoice',
-            })
+            cr, uid, values, context={'type': 'out_invoice'})
+        values.update({'partner_id': self.customer2_id})
+        self.invoice2_id = invoice_model.create(
+            cr, uid, values, context={'type': 'out_invoice'})
         wf_service = netsvc.LocalService('workflow')
-        wf_service.trg_validate(
-            uid, 'account.invoice', self.invoice_id, 'invoice_open', cr)
-        self.assert_invoice_state('open')
+        for res_id in self.invoice_id, self.invoice2_id:
+            wf_service.trg_validate(
+                uid, 'account.invoice', res_id, 'invoice_open', cr)
+            self.assert_invoice_state(res_id, 'open')
 
-    def setup_voucher(self, reg, cr, uid):
+    def setup_voucher(self, reg, cr, uid, invoice_id, amount):
         """
         Create a voucher with the amount of the invoice minus the discount.
         Check that this satisfies the invoice.
@@ -170,39 +194,22 @@ class TestCashDiscount(SingleTransactionCase):
         """
         voucher_reg = reg('account.voucher')
         vals = {}
+        invoice = reg('account.invoice').browse(
+            cr, uid, invoice_id)
         journal_id = reg('account.journal').search(
             cr, uid, [('company_id', '=', self.company_id),
                       ('code', '=', 'BNK2')])[0]
         res = voucher_reg.onchange_partner_id(
-            cr, uid, [], self.customer_id, journal_id,
+            cr, uid, [], invoice.partner_id.id, journal_id,
             0.0, 1, ttype='receipt', date=False)
 
-        # Create a cash account under an existing parent
-        account_view_id = reg('account.account').search(
-            cr, uid, [
-                ('company_id', '=', self.company_id),
-                ('code', '=', '1104')])[0]
-        user_type_cash_id = reg('ir.model.data').get_object_reference(
-            cr, uid, 'account', 'data_account_type_cash')[1]
-
-        account_cash_id = reg('account.account').create(
-            cr, uid, {
-                'name': 'Cash',
-                'code': '110499',
-                'company_id': self.company_id,
-                'parent_id': account_view_id,
-                'type': 'liquidity',
-                'user_type': user_type_cash_id,
-                })
-        period_id = self.registry('account.invoice').read(
-            self.cr, self.uid, self.invoice_id, ['period_id'])['period_id'][0]
         vals = {
-            'period_id': period_id,
-            'account_id': account_cash_id,
-            'amount': 90.0,
+            'period_id': invoice.period_id.id,
+            'account_id': self.account_cash_id,
+            'amount': amount,
             'company_id': self.company_id,
             'journal_id': journal_id,
-            'partner_id': self.customer_id,
+            'partner_id': invoice.partner_id.id,
             'type': 'receipt',
             }
         if not res['value']['line_cr_ids']:
@@ -220,11 +227,15 @@ class TestCashDiscount(SingleTransactionCase):
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(
             uid, 'account.voucher', voucher.id, 'proforma_voucher', cr)
-        self.assert_invoice_state('paid')
 
     def test_cash_discount(self):
         reg, cr, uid, = self.registry, self.cr, self.uid
         self.setup_company(reg, cr, uid)
         self.setup_chart(reg, cr, uid)
         self.setup_receivables(reg, cr, uid)
-        self.setup_voucher(reg, cr, uid)
+        # paying the invoice amount - discount should pay the invoice
+        self.setup_voucher(reg, cr, uid, self.invoice_id, 90.0)
+        self.assert_invoice_state(self.invoice_id, 'paid')
+        # paying less should not pay the invoice
+        self.setup_voucher(reg, cr, uid, self.invoice2_id, 80.0)
+        self.assert_invoice_state(self.invoice2_id, 'open')
