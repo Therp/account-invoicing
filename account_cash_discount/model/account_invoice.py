@@ -201,7 +201,7 @@ class AccountInvoice(orm.Model):
                 'move_id': move_id,
                 'account_id': account_id,
             },
-            context=move_line._context)
+            context=dict(move_line._context))
         return data
 
     def copy_data(self, cr, uid, id, default=None, context=None):

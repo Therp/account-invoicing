@@ -114,6 +114,10 @@ class TestCashDiscount(SingleTransactionCase):
             cr, uid, [
                 ('company_id', '=', self.company_id),
                 ('code', '=', '200000')])[0]
+        expense_id = reg('account.account').search(
+            cr, uid, [
+                ('company_id', '=', self.company_id),
+                ('code', '=', '220000')])[0]
 
         payment_term_id = reg('account.payment.term').create(
             cr, uid, {
@@ -121,9 +125,10 @@ class TestCashDiscount(SingleTransactionCase):
                 'line_ids': [(0, False, {})],
                 'cash_discount_ids': [(0, False, {
                     'days': 2,
-                    'discount': 0.10,
+                    'discount': 10.0,
                     'allowed_deviation': 0.2,
                     'discount_income_account_id': income_id,
+                    'discount_expense_account_id': expense_id,
                     })],
                 })
 
