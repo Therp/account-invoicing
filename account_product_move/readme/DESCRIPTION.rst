@@ -1,0 +1,1 @@
+This module creates extra Journal Entries for outgoing invoices, depending on the products sold in the invoice lines. To specify the products for which this should happen, the user creates Account Product Move records.

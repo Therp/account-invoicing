@@ -1,7 +1,7 @@
 To use this module, you need to:
 
-#. Go to *Accounting > Accounting > Journals > Journal Templates*.
-#. Create a new Journal Template record and give it a name.
+#. Go to *Accounting > Accounting > Journals > Extra Product Moves*.
+#. Create a new account_product_move record and give it a name.
 #. Create product template lines.
 #. Create journal items for these products.
 #. Create a new out invoice with product lines.
