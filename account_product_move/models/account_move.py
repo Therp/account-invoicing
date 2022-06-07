@@ -40,40 +40,56 @@ class AccountMove(models.Model):
             "domain": [("id", "in", self.product_move_ids.ids)],
         }
 
-    def action_post(self):
-        res = super().action_post()
-        if self.type != "out_invoice":
-            return res
-        # Remove previous product_move_ids
-        self.product_move_ids.line_ids.unlink()
-        account_auto_model = self.env["account.product.move"]
-        product_tmpl_ids = self.mapped("invoice_line_ids.product_id.product_tmpl_id")
+    def post(self):
+        res = super().post()
         extra_moves = self.env["account.move"]
-        for tmpl in product_tmpl_ids:
-            # This is either a singleton, or an empty recordset
-            # because of a UNIQUE constraint in product_tmpl_id
-            account_auto = account_auto_model.search(
-                [("product_tmpl_line_ids.product_tmpl_id", "=", tmpl.id)]
-            )
-            if not account_auto:
+        for move in self:
+            if move.type not in ["out_invoice", "out_refund"]:
                 continue
-            quantity_in_invoice_lines = self._get_quantity_in_invoice_line(tmpl)
-            for item in account_auto.journal_item_ids:
-                extra_move = self._get_or_create_journal(item)
-                self._create_journal_entry_item(
-                    quantity_in_invoice_lines, extra_move, item
-                )
-                extra_moves |= extra_move
-        for extra_move in extra_moves:
-            extra_move.action_post()
-        return res
+            # Remove previous lines
+            move.product_move_ids.line_ids.unlink()
+            # Remove previous journal entries
+            move.product_move_ids.with_context(force_delete=True).unlink()
+            for invoice_line in move.invoice_line_ids:
+                product_move = self._get_product_move(invoice_line)
+                if not product_move:
+                    continue
+                for item in product_move.journal_item_ids:
+                    extra_move = move._get_or_create_extra_move(item)
+                    move._create_journal_entry_item(
+                        invoice_line.quantity, extra_move, item
+                    )
+                    # TODO: revisit this
+                    if extra_move in extra_moves:
+                        continue
+                    extra_moves += extra_move
+            for extra_move in extra_moves:
+                extra_move.action_post()
+            return res
 
-    def _get_or_create_journal(self, item):
+    def _get_product_move(self, invoice_line):
+        # TODO constraint in the combo of currency, product_tmpl_ids
+        return self.env["account.product.move"].search(
+            [
+                (
+                    "currency_id",
+                    "=",
+                    invoice_line.currency_id.id or self.currency_id.id,
+                ),
+                (
+                    "id",
+                    "in",
+                    invoice_line.product_id.product_tmpl_id.product_move_ids.ids,
+                ),
+            ]
+        )
+
+    def _get_or_create_extra_move(self, item):
         move_model = self.env["account.move"]
         vals = {
             "type": "entry",
             "ref": self.name,
-            "journal_id": item.journal_id.id,
+            "journal_id": item.product_move_id.journal_id.id,
             "date": self.invoice_date,
             "invoice_move_id": self.id,
         }
@@ -102,20 +118,8 @@ class AccountMove(models.Model):
             {
                 "move_id": journal.id,
                 "account_id": item.account_id.id,
-                "currency_id": item.currency_id.id,
+                # "currency_id": item.product_move_id.currency_id.id,
                 "credit": credit * quantity,
                 "debit": debit * quantity,
             }
-        )
-
-    def _get_quantity_in_invoice_line(self, template):
-        return sum(
-            self.env["account.move.line"]
-            .search(
-                [
-                    ("move_id", "=", self.id),
-                    ("product_id.product_tmpl_id", "=", template.id),
-                ]
-            )
-            .mapped("quantity")
         )

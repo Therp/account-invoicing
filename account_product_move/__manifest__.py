@@ -14,6 +14,7 @@
         "security/ir.model.access.csv",
         "views/account_product_move.xml",
         "views/account_move_views.xml",
+        "views/product_views.xml",
     ],
-    "demo": ["demo/account_product_move.xml"],
+    # "demo": ["demo/account_product_move.xml"],
 }

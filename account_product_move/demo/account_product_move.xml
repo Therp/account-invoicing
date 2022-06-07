@@ -3,25 +3,4 @@
     <record id="account_product_move_01" model="account.product.move">
         <field name="name">Demo</field>
     </record>
-    <!-- Product lines-->
-    <record
-        id="account_product_move_product_line_01"
-        model="account.product.move.product.line"
-    >
-        <field
-            name="product_tmpl_id"
-            ref="product.product_product_4_product_template"
-        />
-        <field name="product_move_id" ref="account_product_move_01" />
-    </record>
-    <record
-        id="account_product_move_product_line_02"
-        model="account.product.move.product.line"
-    >
-        <field
-            name="product_tmpl_id"
-            ref="product.product_product_11_product_template"
-        />
-        <field name="product_move_id" ref="account_product_move_01" />
-    </record>
 </odoo>

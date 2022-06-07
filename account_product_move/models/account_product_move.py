@@ -9,10 +9,10 @@ class AccountProductMove(models.Model):
     _description = "Template for additional journal entries/items"
 
     name = fields.Char(required=True, copy=False, default="New")
-    product_tmpl_line_ids = fields.One2many(
-        comodel_name="account.product.move.product.line",
+    product_tmpl_ids = fields.Many2many(
+        comodel_name="product.template",
         inverse_name="product_move_id",
-        string="Product lines",
+        string="Templates",
         help="Journal items will be created for these products",
     )
     journal_item_ids = fields.One2many(
@@ -22,6 +22,8 @@ class AccountProductMove(models.Model):
         string="Journal Items",
         help="Journal items to be added in new journal entry",
     )
+    journal_id = fields.Many2one(comodel_name="account.journal", required=True)
+    currency_id = fields.Many2one(comodel_name="res.currency", required=True)
     active = fields.Boolean(default=True)
 
     def action_toggle_active(self):
@@ -46,11 +48,11 @@ class AccountProductMove(models.Model):
             JOIN account_product_move move ON
                 move.id = line.product_move_id
             JOIN account_journal journal ON
-                journal.id = line.journal_id
+                journal.id = move.journal_id
             JOIN res_company company ON
                 company.id = journal.company_id
             JOIN res_currency currency ON
-                currency.id = company.currency_id
+                currency.id = move.currency_id
             WHERE
                 line.product_move_id IN %s
             GROUP BY line.product_move_id, currency.decimal_places

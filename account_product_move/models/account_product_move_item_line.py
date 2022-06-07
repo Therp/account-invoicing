@@ -12,6 +12,5 @@ class AccountProductMoveItemLine(models.Model):
     account_id = fields.Many2one(
         comodel_name="account.account", ondelete="cascade", required=True
     )
-    journal_id = fields.Many2one(comodel_name="account.journal", required=True)
-    currency_id = fields.Many2one(related="journal_id.currency_id")
+    currency_id = fields.Many2one(related="product_move_id.currency_id")
     product_move_id = fields.Many2one(comodel_name="account.product.move")
